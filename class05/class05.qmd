@@ -1,0 +1,112 @@
+---
+title: "Class 5 data Visualization with ggplot2"
+author: "Chelsea (PID: A16871799)"
+format: pdf
+---
+
+## Using GGPLOT
+
+The ggplot2 package needs to be installed as it does not come with R " out of the box"
+
+We use the 'install.packages()' to do this
+
+```{r}
+head(cars)
+```
+
+To use ggplot we first need to load it up before I can call any of functions in the packages. do this with the `library()` function.
+```{r}
+library(ggplot2)
+ggplot()
+```
+
+
+All ggplot find at least 3 thing
+-data (stuff we plot)
+-aesthetic mapping (aes value)
+-geoms
+
+```{r}
+ggplot(cars)+ 
+  aes(x=speed, y=dist)+
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)+
+  labs(title="Speed and stopping distance of Cars",
+       x="Speed (MPH)", 
+       y="Stopping Distance (ft)",
+       subtitle = "Your informative subtitle text here",
+       caption="Dataset: 'cars'")+
+       theme_bw()
+  
+```
+ggplot is not the onlygraphing system in R there are more. There is even "base R" graphics.
+
+```{r}
+plot(cars)
+```
+
+```{r}
+url <- "https://bioboot.github.io/bimm143_S20/class-material/up_down_expression.txt"
+genes <- read.delim(url)
+head(genes)
+```
+```{r}
+nrow(genes)
+ncol(genes)
+sum(genes$State=="up")
+table(genes$State)
+round( table(genes$State)/nrow(genes) * 100, 2 )
+```
+
+
+```{r}
+p <- ggplot(genes)+
+  aes(x=Condition1, y=Condition2, col=State)+
+  geom_point()
+  
+p+scale_colour_manual(values=c("blue","gray","red"))+
+  labs(title="Gene Expression Changes Upon Drug Treatment",
+       x="Control (no drug)", 
+       y="Drug Treatment")
+```
+
+# File location online
+
+```{r}
+library("dplyr")
+url <- "https://raw.githubusercontent.com/jennybc/gapminder/master/inst/extdata/gapminder.tsv"
+gapminder <- read.delim(url)
+gapminder_2007 <- gapminder %>% filter(year==2007)
+```
+```{r}
+gapminder_1957 <- gapminder %>% filter(year==1957| year==2007)
+
+ggplot(gapminder_1957) + 
+  geom_point(aes(x = gdpPercap, y = lifeExp, color=continent,
+                 size = pop), alpha=0.7) + 
+  scale_size_area(max_size = 10) +
+  facet_wrap(~year)
+```
+```{r}
+gapminder_top5 <- gapminder %>% 
+  filter(year==2007) %>% 
+  arrange(desc(pop)) %>% 
+  top_n(5, pop)
+
+gapminder_top5
+```
+```{r}
+ggplot(gapminder_top5) + 
+  geom_col(aes(x = country, y = pop, fill = lifeExp))
+```
+```{r}
+ggplot(gapminder_top5) +
+  aes(x=reorder(country, -pop), y=pop, fill=country) +
+  geom_col(col="gray30") +
+  guides(fill="none")
+```
+
+
+
+
+
