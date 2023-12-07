@@ -1,0 +1,293 @@
+---
+title: "Class 10: Comparative analysis of structures"
+author: "Chelsea A16871799"
+format: pdf
+---
+
+#PDB database
+Let's first see what is in PDB database-- the main repository of protein structure
+
+Download composition sats from: http://www.rcsb.org/stats/summary
+
+For context: Unitprot Contain 251600,768. The PDB only contains 183,201
+```{r}
+stats <- read.csv("Data Export Summary.csv",row.names=1)
+stats
+```
+The R recognize 158,844 as character as it contains commas, we need to fix this.
+```{r}
+x <- stats$X.ray
+x
+```
+```{r}
+as.numeric(gsub(",", "",x))
+```
+
+```{r}
+rm.comma <- function(x){
+  as.numeric(gsub(",","",x))
+}
+```
+```{r}
+rm.comma(stats$EM)
+``` 
+#I can use appoly() to fix the whole table
+```{r}
+pdbstats <- apply(stats,2, rm.comma)
+rownames(pdbstats) <- rownames(stats)
+head(pdbstats)
+```
+
+Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+```{r}
+totals <- apply(pdbstats,2, sum)
+totals
+```
+```{r}
+round(totals/totals["Total"]*100,2)
+```
+84.83% is X.ray while 8.33% is EM.
+Q2: What proportion of structures in the PDB are protein?
+```{r}
+round(pdbstats[1,"Total"]/sum(pdbstats[,"Total"])*100,2)
+```
+<Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB? SKIPPED
+Q4: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+#There is a 2 Angstrom structure and hydrogen is not visible at all times. water molecules are too tiny to visualize.
+
+Q5: There is a critical “conserved” water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have?
+#The water molecule HOH 308 near Mk1
+
+Q6: 
+Here is a lovely figure of HIP-Pr with the catalytic residues, Mk1 compound and all important water 308.
+
+![](1HSG.png)
+
+Q7: [Optional] As you have hopefully observed HIV protease is a homodimer (i.e. it is composed of two identical chains). With the aid of the graphic display can you identify secondary structure elements that are likely to only form in the dimer rather than the monomer?
+
+The bio3d package for structural bioinformatics
+```{r}
+library(bio3d)
+pdb <- read.pdb("1hsg")
+pdb
+```
+#predicting functional motions of a single structure
+
+Let's finish toady with a bioinformatics calculators predict the functional motion of a PDB structure. 
+```{r}
+adk <- read.pdb("6s36")
+m <- nma(adk)
+```
+```{r}
+plot(m)
+mktrj(m, file="adk_m7.pdb")
+```
+we need some packages for today class include `bio3d` and `msa`.
+The `msa` package is from BioConductor. packages focus on genomics type work are managed by the `BiocManager packages.
+
+Insatll `BiocManager` with install.packages("BiocManager") in the console and then BiocManager::install("msa") all entered iin the R "brain" console.
+```{r}
+library(bio3d)
+aa <- get.seq("1ake_A")
+aa
+```
+Now I can search the PDB database for related sequences:
+```{r}
+#b <- blast.pdb(aa)
+```
+```{r}
+#hits <- plot(b)
+```
+```{r}
+hits <- NULL
+hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A','5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A','4K46_A','3GMT_A','4PZL_A')
+
+```
+```{r}
+hits$pdb.id
+```
+Side-note: annotate structure(what they are, what species they come from, etc)
+To do this we can use `pdb.annotate()`
+```{r}
+anno <- pdb.annotate(hits$pdb.id)
+```
+```{r}
+#attributes(anno)
+head(anno)
+```
+Now we can go further analysis with the `get.pdb()` function. 
+
+```{r}
+#Download related PDB files
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+```{r}
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+```
+#Principal Analysis
+
+```{r}
+# Vector containing PDB codes for figure axis
+ids <- basename.pdb(pdbs$id)
+# Draw schematic alignment
+#plot(pdbs, labels=ids)
+```
+
+```{r}
+# Perform PCA
+pc.xray <- pca(pdbs)
+plot(pc.xray)
+```
+```{r}
+# Visualize first principal component
+pc1 <- mktrj(pc.xray, pc=1, file="pc_1.pdb")
+```
+```{r}
+# Calculate RMSD
+rd <- rmsd(pdbs)
+
+# Structure-based clustering
+hc.rd <- hclust(dist(rd))
+grps.rd <- cutree(hc.rd, k=3)
+
+plot(pc.xray, 1:2, col="grey50", bg=grps.rd, pch=21, cex=1)
+```
+
+![](HIVPR_MONOMER.png)
+```{r}
+results_dir <- "hivpr_dimer_23119/"
+
+# File names for all PDB models
+pdb_files <- list.files(path=results_dir,
+                        pattern="*.pdb",
+                        full.names = TRUE)
+pdb_files
+```
+
+```{r}
+library(bio3d)
+pdbs <- pdbaln (pdb_files, fit=TRUE, exefile="msa")
+pdbs
+```
+```{r}
+rd <- rmsd(pdbs)
+range(rd)
+```
+```{r}
+library(pheatmap)
+
+colnames(rd) <- paste0("m",1:5)
+rownames(rd) <- paste0("m",1:5)
+pheatmap(rd)
+```
+```{r}
+# Read a reference PDB structure
+pdb <- read.pdb("1hsg")
+```
+```{r}
+plotb3(pdbs$b, typ="l", lwd=2, sse=pdb)
+points(pdbs$b[2,], typ="l", col="red")
+points(pdbs$b[3,], typ="l", col="blue")
+points(pdbs$b[4,], typ="l", col="darkgreen")
+points(pdbs$b[5,], typ="l", col="orange")
+abline(v=100, col="gray")
+
+```
+```{r}
+core <- core.find(pdbs)
+```
+```{r}
+core.inds <- print(core, vol=0.5)
+```
+```{r}
+xyz <- pdbfit(pdbs, core.inds, outpath="corefit_structures")
+```
+```{r}
+rd <- rmsd(xyz)
+```
+![](HIVPR_DIMER_23119.png)
+
+```{r}
+# Change the names for easy reference
+colnames(rd) <- paste0("m",1:5)
+rownames(rd) <- paste0("m",1:5)
+pheatmap(rd)
+```
+```{r}
+rf <- rmsf(xyz)
+
+plotb3(rf, sse=pdb)
+abline(v=100, col="gray", ylab="RMSF")
+```
+```{r}
+library(jsonlite)
+
+# Listing of all PAE JSON files
+pae_files <- list.files(path=results_dir,
+                        pattern=".*model.*\\.json",
+                        full.names = TRUE)
+```
+```{r}
+pae1 <- read_json(pae_files[1],simplifyVector = TRUE)
+pae5 <- read_json(pae_files[5],simplifyVector = TRUE)
+
+attributes(pae1)
+```
+```{r}
+# Per-residue pLDDT scores 
+#  same as B-factor of PDB..
+head(pae1$plddt) 
+```
+```{r}
+pae1$max_pae
+pae5$max_pae
+```
+```{r}
+plot.dmat(pae1$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)")
+```
+```{r}
+plot.dmat(pae5$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)",
+          grid.col = "black",
+          zlim=c(0,30))
+```
+```{r}
+plot.dmat(pae1$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)",
+          grid.col = "black",
+          zlim=c(0,30))
+```
+```{r}
+aln_file <- list.files(path=results_dir,
+                       pattern=".a3m$",
+                        full.names = TRUE)
+aln_file
+```
+```{r}
+aln <- read.fasta(aln_file[1], to.upper = TRUE)
+```
+```{r}
+dim(aln$ali)
+```
+```{r}
+sim <- conserv(aln)
+plotb3(sim[1:99], sse=trim.pdb(pdb, chain="A"))
+```
+```{r}
+con <- consensus(aln, cutoff = 0.9)
+con$seq
+```
+```{r}
+m1.pdb <- read.pdb(pdb_files[1])
+occ <- vec2resno(c(sim[1:99], sim[1:99]), m1.pdb$atom$resno)
+write.pdb(m1.pdb, o=occ, file="m1_conserv.pdb")
+```
+![](M1_CONSERV.PDB.png)
+
+
+
+
