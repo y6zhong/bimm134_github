@@ -1,0 +1,167 @@
+---
+title: "Class07: Machine Learning 1"
+author: "Chelsea (PID:A16871799)"
+format: pdf
+---
+
+clustering
+
+We will start today's lab with clustering methods, in particular so-called K-means. The main function for this in R is `kmeans()`
+
+Let's try it on some made up data where we know data should be 
+```{r}
+x <- rnorm(10000,mean=3)
+hist(x)
+```
+60 points
+```{r}
+tmp <- c(rnorm(30, mean=3),rnorm(30,mean=-3))
+x <- cbind(x=tmp,y=rev(tmp))
+head(x)
+```
+we can pass this to the base R function`plot(x)` 
+```{r}
+plot(x)
+```
+```{r}
+k <- kmeans(x,centers=2,nstart=20)
+k
+```
+>Q1: How many points are in each cluster?
+
+```{r}
+k$size
+```
+>Q2 Cluster membership
+
+```{r}
+k$cluster
+```
+
+>Q3: Cluster center
+
+```{r}
+k$centers
+```
+```{r}
+plot(x,col=k$cluster)
+```
+
+>Q4 plot my results
+
+```{r}
+plot(x,col=k$cluster,pch=16)
+```
+>Q5. Cluster the data again with kmeans()into 4 groups and plot the results
+
+```{r}
+k4 <- kmeans(x,centers=4,nstart=20)
+plot(x,col=k4$cluster,pch=16)
+```
+k-means is popular mostly because it's fast and relatively straightforward to run and understand. It has a big limitation in that you need to tell it how many groups(k, or centers) you want.
+
+#hierarchical clustering
+
+The main function in base R is called `hclust()`. You have to pass it in a "distance matrix" not just your input data.
+```{r}
+hc <- hclust( dist(x) )
+hc
+```
+```{r}
+plot(hc)
+```
+
+To find the cluster (cluster membership vector) from a `hclust()` result we "cut" the tree we like.
+
+```{r}
+plot(hc)
+abline(h=8,col="red")
+grps <- cutree(hc, h=8)
+```
+```{r}
+table(grps)
+plot(x,col=grps,pch=16)
+```
+
+#principlal component
+
+##PCA of UK food data
+
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url)
+x
+```
+#Q1. How many rows and columns are in your new data frame named x? What R functions could you use to answer this questions?
+R functions such as dim(x); ncol(x) and nrow(x).
+
+```{r}
+dim(x)
+x
+```
+I need to fix that first columns
+```{r}
+# Note how the minus indexing works
+rownames(x) <- x[,1]
+x <- x[,-1]
+head(x)
+```
+
+```{r}
+x <- read.csv(url, row.names=1)
+head(x)
+```
+Q2: prefer the second method that set row.names=1 because if run the first approach code block (i.e. the one with x <- x[,-1])multiple times,columns decreases one by one 
+
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+Q3: Changing what optional argument in the above barplot() function results in the following plot?
+#beside=FALSE
+```{r}
+barplot(as.matrix(x), beside=F, col=rainbow(nrow(x)))
+```
+```{r}
+pairs(x, col=rainbow(17), pch=16)
+```
+Q5:The R code generates a matrix of pairwise scatter plots for the dataset x, and it uses 17 different colors to represent different categories of data points. If a given point lies on the diagonal for a given plot, the point is having equal distance with regards to the 2 country, so they eat same food between 2 country 
+
+##Principal Component
+
+PCA can help us make sense of these types of dataset. Let's see how it works.
+
+The main function in "base" R is called `prcomp()`.In this case we want to first take the transpose of our input `x` so the columns are the food types and the countries are the rows.
+```{r}
+head(t(x))
+```
+```{r}
+pca <- prcomp(t(x))
+summary(pca)
+```
+```{r}
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1], pca$x[,2],colnames(x),
+     col=c("orange","red","blue","darkgreen"))
+```
+the "loadings" tell us how much the origonal variable in our case the foods contribute to the new variable. such as the PCs
+```{r}
+head(pca$rotation)
+## Lets focus on PC1 as it accounts for > 90% of variance 
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,1], las=2)
+```
+
+Q6. What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
+The main difference is in the food consumption of Fresh_fruit and  alcoholic drinks
+
+
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,2], las=2)
+```
+Q9: Generate a similar ‘loadings plot’ for PC2. What two food groups feature prominantely and what does PC2 mainly tell us about?
+Fresh_potatoes and soft_drinks are the 2 main features and PC2 mainly tell us about what is the second most variation in the data.
+
+
+

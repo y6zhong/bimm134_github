@@ -1,0 +1,170 @@
+---
+title: "Class 10: Comparative analysis of structures"
+author: "Chelsea A16871799"
+format: html
+---
+
+
+#PDB database
+Let's first see what is in PDB database-- the main repository of protein structure
+
+Download composition sats from: http://www.rcsb.org/stats/summary
+
+For context: Unitprot Contain 251600,768. The PDB only contains 183,201
+
+```{r}
+stats <- read.csv("Data Export Summary.csv",row.names=1)
+stats
+```
+
+The R recognize 158,844 as character as it contains commas, we need to fix this.
+
+```{r}
+x <- stats$X.ray
+x
+```
+
+```{r}
+as.numeric(gsub(",", "",x))
+```
+
+```{r}
+rm.comma <- function(x){
+  as.numeric(gsub(",","",x))
+}
+```
+
+```{r}
+rm.comma(stats$EM)
+``` 
+
+#I can use appoly() to fix the whole table
+
+```{r}
+pdbstats <- apply(stats,2, rm.comma)
+rownames(pdbstats) <- rownames(stats)
+head(pdbstats)
+```
+
+
+Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+```{r}
+totals <- apply(pdbstats,2, sum)
+totals
+```
+
+```{r}
+round(totals/totals["Total"]*100,2)
+```
+
+84.83% is X.ray while 8.33% is EM.
+Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+round(pdbstats[1,"Total"]/sum(pdbstats[,"Total"])*100,2)
+```
+
+<Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB? SKIPPED
+Q4: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+#There is a 2 Angstrom structure and hydrogen is not visible at all times. water molecules are too tiny to visualize.
+
+Q5: There is a critical “conserved” water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have?
+#The water molecule HOH 308 near Mk1
+
+Q6: 
+Here is a lovely figure of HIP-Pr with the catalytic residues, Mk1 compound and all important water 308.
+
+![](1HSG.png)
+
+Q7: [Optional] As you have hopefully observed HIV protease is a homodimer (i.e. it is composed of two identical chains). With the aid of the graphic display can you identify secondary structure elements that are likely to only form in the dimer rather than the monomer?
+
+The bio3d package for structural bioinformatics
+
+```{r}
+library(bio3d)
+pdb <- read.pdb("1hsg")
+pdb
+```
+
+#predicting functional motions of a single structure
+
+Let's finish toady with a bioinformatics calculators predict the functional motion of a PDB structure. 
+
+```{r}
+adk <- read.pdb("6s36")
+m <- nma(adk)
+```
+
+```{r}
+plot(m)
+mktrj(m, file="adk_m7.pdb")
+```
+
+we need some packages for today class include `bio3d` and `msa`.
+The `msa` package is from BioConductor. packages focus on genomics type work are managed by the `BiocManager packages.
+
+Insatll `BiocManager` with install.packages("BiocManager") in the console and then BiocManager::install("msa") all entered iin the R "brain" console.
+
+```{r}
+library(bio3d)
+aa <- get.seq("1ake_A")
+aa
+```
+
+Now I can search the PDB database for related sequences:
+
+```{r}
+b <- blast.pdb(aa)
+```
+
+```{r}
+hits <- plot(b)
+```
+
+```{r}
+head(b$hits.tbl)
+```
+
+```{r}
+hits$pdb.id
+```
+
+Side-note: annotate structure(what they are, what species they come from, etc)
+To do this we can use `pdb.annotate()`
+
+```{r}
+anno <- pdb.annotate(hits$pdb.id)
+```
+
+```{r}
+#attributes(anno)
+head(anno)
+```
+
+Now we can go further analysis with the `get.pdb()` function. 
+
+
+```{r}
+#Download related PDB files
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+```{r}
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+pdbs
+```
+
+#Principal Analysis
+
+```{r}
+# Perform PCA
+pc.xray <- pca(pdbs)
+plot(pc.xray)
+```
+
+```{r}
+# Visualize first principal component
+pc1 <- mktrj(pc.xray, pc=1, file="pc_1.pdb")
+```
+
