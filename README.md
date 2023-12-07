@@ -6,8 +6,8 @@ My classwork for F23 in [BIMM143](https://bioboot.github.io/bimm143_F23/) at UC 
 
 - class07: [Machine Learning](https://github.com/y6zhong/bimm134_github/blob/main/class07/class07.md)
 
-- class9 [halloween project]
+- class08 [halloween project](https://github.com/y6zhong/bimm134_github/blob/main/class08/class9%20halloween%20project.md)
 
-- class9: [mini project]
+- class09: [mini project]
 
 - class10 [Structural Bioinformatics]
