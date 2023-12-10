@@ -3,7 +3,6 @@ My classwork for F23 in [BIMM143](https://bioboot.github.io/bimm143_F23/) at UC 
 
 
 - class05: [INTRO TO GGPLOT](https://github.com/y6zhong/bimm134_github/blob/main/class05/class05.md)
-- class06: [R Functions]()
 
 - class07: [Machine Learning](https://github.com/y6zhong/bimm134_github/blob/main/class07/class07.md)
 
