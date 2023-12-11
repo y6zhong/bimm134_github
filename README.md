@@ -10,4 +10,4 @@ My classwork for F23 in [BIMM143](https://bioboot.github.io/bimm143_F23/) at UC 
 
 - class09: [mini project](https://github.com/y6zhong/bimm134_github/blob/main/class09/class%209miniproject.md)
 
-- class10 [Structural Bioinformatics]
+- class10 [Structural Bioinformatics](https://github.com/y6zhong/bimm134_github/blob/main/class10/class10structualbioinformatics.md)
