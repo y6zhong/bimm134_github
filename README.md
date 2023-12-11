@@ -16,6 +16,6 @@ My classwork for F23 in [BIMM143](https://bioboot.github.io/bimm143_F23/) at UC 
 
 - class14 [RNASeq Mini-project](https://github.com/y6zhong/bimm134_github/blob/main/class14/class-14-Deseq-mini-project.md)
 
-- class17 [AWS Cloud Computing](https://github.com/y6zhong/bimm134_github/blob/main/class18/class18chelsea.md)
+- class18 [AWS Cloud Computing](https://github.com/y6zhong/bimm134_github/blob/main/class18/class18chelsea.md)
 
 - class19 [pertussis and the CMI-PB project](https://github.com/y6zhong/bimm134_github/blob/main/class19/class19pertussis.md)
