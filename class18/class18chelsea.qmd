@@ -1,0 +1,208 @@
+---
+title: "class18"
+author: "chelsea"
+format: pdf
+---
+```{r}
+library(tximport)
+
+# setup the folder and filenames to read
+folders <- dir(pattern="SRR21568*")
+samples <- sub("_quant", "", folders)
+files <- file.path( folders, "abundance.h5" )
+names(files) <- samples
+
+txi.kallisto <- tximport(files, type = "kallisto", txOut = TRUE)
+```
+```{r}
+head(txi.kallisto$counts)
+```
+```{r}
+colSums(txi.kallisto$counts)
+```
+```{r}
+sum(rowSums(txi.kallisto$counts)>0)
+```
+```{r}
+to.keep <- rowSums(txi.kallisto$counts) > 0
+kset.nonzero <- txi.kallisto$counts[to.keep,]
+```
+```{r}
+keep2 <- apply(kset.nonzero,1,sd)>0
+x <- kset.nonzero[keep2,]
+```
+```{r}
+pca <- prcomp(t(x), scale=TRUE)
+```
+```{r}
+summary(pca)
+```
+```{r}
+plot(pca$x[,1], pca$x[,2],
+     col=c("blue","blue","red","red"),
+     xlab="PC1", ylab="PC2", pch=16)
+```
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+# Make metadata object for the samples
+colData <- data.frame(condition = factor(rep(c("control", "treatment"), each = 2)))
+rownames(colData) <- colnames(txi.kallisto$counts)
+
+# Make the data.frame for ggplot 
+y <- as.data.frame(pca$x)
+y$Condition <- as.factor(colData$condition)
+
+ggplot(y) +
+  aes(PC1, PC2, col=Condition) +
+  geom_point() +
+  geom_text_repel(label=rownames(y)) +
+  theme_bw()
+```
+```{r}
+plot(pca$x[,1], pca$x[,3],
+     col=c("blue","blue","red","red"),
+     xlab="PC1", ylab="PC3", pch=16)
+```
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+# Make metadata object for the samples
+colData <- data.frame(condition = factor(rep(c("control", "treatment"), each = 2)))
+rownames(colData) <- colnames(txi.kallisto$counts)
+
+# Make the data.frame for ggplot 
+y <- as.data.frame(pca$x)
+y$Condition <- as.factor(colData$condition)
+
+ggplot(y) +
+  aes(PC1, PC3, col=Condition) +
+  geom_point() +
+  geom_text_repel(label=rownames(y)) +
+  theme_bw()
+```
+```{r}
+plot(pca$x[,2], pca$x[,3],
+     col=c("blue","blue","red","red"),
+     xlab="PC2", ylab="PC3", pch=16)
+```
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+# Make metadata object for the samples
+colData <- data.frame(condition = factor(rep(c("control", "treatment"), each = 2)))
+rownames(colData) <- colnames(txi.kallisto$counts)
+
+# Make the data.frame for ggplot 
+y <- as.data.frame(pca$x)
+y$Condition <- as.factor(colData$condition)
+
+ggplot(y) +
+  aes(PC2, PC3, col=Condition) +
+  geom_point() +
+  geom_text_repel(label=rownames(y)) +
+  theme_bw()
+```
+```{r}
+library(bio3d)
+```
+```{r}
+alignment <- read.fasta("musclefinal-I20231205-211331-0835-23446274-p1m.clw.fst")
+```
+```{r}
+identity_matrix <- seqidentity(alignment)
+identity_matrix
+```
+```{r}
+heatmap(identity_matrix, margins=c(10,10),col=heat.colors(256))
+       
+```
+
+```{r}
+library(bio3d)
+library(pheatmap)
+aln <- read.fasta("musclefinal-I20231205-211331-0835-23446274-p1m.clw.fst")
+ide <- $identity(aln)
+pheatmap(ide)
+```
+
+
+```{r}
+identity_matrix <- seqidentity(alignment)
+
+# Find the sequence with the highest identity to others in the alignment
+max_identity <- apply(identity_matrix, 1, max)
+
+# Find the sequence with the highest identity to all others in the alignment
+representative_sequence <- which.max(max_identity)
+representative_sequence
+```
+
+```{r}
+library(bio3d)
+3
+
+# Search the PDB for similar structures using blast.pdb()
+blast_result <- blast.pdb(query_sequence)
+
+# Retrieve top unique hits (ignoring hits from different chains of the same structure)
+top_hits <- unique(blast_result$pdb.id)[1:3]
+```
+
+```{r}
+stats <- read.csv("Data Export Summary.csv",row.names=1)
+stats
+```
+
+```{r}
+library(bio3d)
+blast_result <- blast.pdb(manihot)
+
+# Extract top unique hits
+top_hits <- unique(blast_result$pdb.id)[1:3]  # Adjust to get top 3 unique hits
+
+# Annotate the hits
+for (hit in top_hits) {
+  annotation <- pdb.annotate(hit)
+  # Print relevant information (PDB identifier, method, resolution, source, E-value, identity)
+  print(paste("PDB ID:", hit))
+  print(annotation$experimentalTechnique)
+  print(annotation$resolution)
+  print(annotation$source)
+  print(paste("E-value:", blast_result$evalue[blast_result$pdb.id == hit]))
+  print(paste("Identity:", blast_result$identity[blast_result$pdb.id == hit]))
+}
+```
+```{r}
+library(bio3d)
+consensus(alignment)
+```
+```{r}
+blast_result <- blast.pdb(alignment$Manihot)
+
+# Extract top unique hits
+top_hits <- unique(blast_result$pdb.id)[1:3]  # Adjust to get top 3 unique hits
+
+# Annotate the hits
+for (hit in top_hits) {
+  annotation <- pdb.annotate(hit)
+  # Print relevant information (PDB identifier, method, resolution, source, E-value, identity)
+  print(paste("PDB ID:", hit))
+  print(annotation$experimentalTechnique)
+  print(annotation$resolution)
+  print(annotation$source)
+  print(paste("E-value:", blast_result$evalue[blast_result$pdb.id == hit]))
+  print(paste("Identity:", blast
+```
+```{r}
+alignment
+```
+
+
+
+
+
+
